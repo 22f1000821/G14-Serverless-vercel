@@ -23,9 +23,9 @@ def to_number(x: Any) -> float:
 class handler(BaseHTTPRequestHandler):
     def _set_cors(self) -> None:
         # Must be exactly "*" for the checker
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "*")
-        self.send_header("Access-Control-Allow-Headers", "*")
+        self.send_header("Access-Control-Allow-Origin: ", "*")
+        self.send_header("Access-Control-Allow-Methods: ", "*")
+        self.send_header("Access-Control-Allow-Headers: ", "*")
 
     def do_OPTIONS(self):
         self.send_response(200)
