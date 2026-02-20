@@ -6,13 +6,28 @@ from typing import Any, Dict, List
 
 DATA_FILE = "q-vercel-latency.json"
 
-def p95(values: List[float]) -> float:
+def p95(values):
+    """
+    95th percentile using linear interpolation (common in numpy/pandas quantile).
+    """
     if not values:
         return 0.0
-    s = sorted(values)
+
+    s = sorted(float(v) for v in values)
     n = len(s)
-    idx = max(0, min(n - 1, math.ceil(0.95 * n) - 1))
-    return float(s[idx])
+    if n == 1:
+        return float(s[0])
+
+    # position on 0..n-1
+    pos = 0.95 * (n - 1)
+    lo = int(math.floor(pos))
+    hi = int(math.ceil(pos))
+
+    if lo == hi:
+        return float(s[lo])
+
+    frac = pos - lo
+    return float(s[lo] + frac * (s[hi] - s[lo]))
 
 def to_number(x: Any) -> float:
     try:
