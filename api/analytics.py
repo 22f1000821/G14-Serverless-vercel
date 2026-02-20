@@ -31,9 +31,39 @@ def p95(values):
 
 def to_number(x: Any) -> float:
     try:
+        if isinstance(x, str):
+            x = x.strip()
+            if x.endswith("%"):
+                x = x[:-1].strip()
         return float(x)
     except Exception:
         return 0.0
+    
+def extract_uptime_percent(r: Dict[str, Any]) -> float:
+    # Try many possible field names
+    candidates = [
+        "uptime", "uptime_pct", "uptime_percent", "uptime_percentage",
+        "availability", "availability_pct", "availability_percent",
+        "uptime_ratio", "uptimeRatio", "up"
+    ]
+
+    val = None
+    for k in candidates:
+        if k in r and r.get(k) is not None:
+            val = r.get(k)
+            break
+
+    if val is None:
+        return 0.0
+
+    num = to_number(val)
+
+    # If it's a ratio like 0.98373, convert to percent
+    # (heuristic: ratios are usually between 0 and 1.5)
+    if 0 <= num <= 1.5:
+        num *= 100.0
+
+    return float(num)
 
 class handler(BaseHTTPRequestHandler):
     def _set_cors(self) -> None:
@@ -88,10 +118,7 @@ class handler(BaseHTTPRequestHandler):
                 to_number(r.get("latency_ms", r.get("latency", r.get("ms", 0))))
                 for r in region_records
             ]
-            uptimes = [
-                to_number(r.get("uptime", r.get("uptime_ratio", r.get("up", 0))))
-                for r in region_records
-            ]
+            uptimes = [extract_uptime_percent(r) for r in region_records]
 
             avg_latency = float(mean(latencies)) if latencies else 0.0
             p95_latency = p95(latencies)
